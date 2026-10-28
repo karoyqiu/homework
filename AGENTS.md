@@ -18,3 +18,17 @@
 
 - 新增或修改生成逻辑、排版或调用参数后，运行受影响脚本生成示例 PDF，检查 A4 页面尺寸、题目可读性、答案与题目对应关系，以及答案独占最后一页。
 - 检查 `README.md` 的脚本列表与实际脚本及参数一致。
+
+## Agent skills
+
+### Issue tracker
+
+任务与规格使用 GitHub Issues；读取、创建或更新任务时，先读 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+任务分流使用五个默认标签；分流前读取 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+采用单上下文布局；探索代码或修改领域术语、架构决策前，读取 `docs/agents/domain.md`。
