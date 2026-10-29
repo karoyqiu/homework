@@ -19,9 +19,10 @@ class MultiplicationTests(unittest.TestCase):
                 self.assertEqual(len(set(oral + written)), 20)
                 for group in (oral, written):
                     self.assertEqual(len(group), 10)
-                    self.assertEqual(sum(100 <= a <= 999 for a, _ in group), 5)
-                    self.assertEqual(sum(1000 <= a <= 9999 for a, _ in group), 5)
                     self.assertTrue(all(10 <= b <= 99 for _, b in group))
+                self.assertTrue(all(100 <= a <= 999 for a, _ in oral))
+                self.assertEqual(sum(100 <= a <= 999 for a, _ in written), 5)
+                self.assertEqual(sum(1000 <= a <= 9999 for a, _ in written), 5)
                 self.assertTrue(all(a % 10 == b % 10 == 0 for a, b in oral))
 
     def test_seed_reproduces_questions(self):
@@ -49,6 +50,9 @@ class MultiplicationTests(unittest.TestCase):
                 questions = document[0].get_text()
                 answers = document[1].get_text()
                 self.assertNotIn("参考答案", questions)
+                for removed in ("多位数乘两位数练习", "四年级上册", "姓名", "班级", "日期"):
+                    self.assertNotIn(removed, questions)
+                self.assertTrue(document[0].get_text(sort=True).startswith("一、口算"))
                 self.assertIn("参考答案", answers)
                 pattern = r"(\d+)\.\s+(\d+)\s*×\s*(\d+)\s*=\s*(\d+)"
                 printed_answers = re.findall(pattern, answers)
