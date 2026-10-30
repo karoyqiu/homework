@@ -1,6 +1,6 @@
 # homework
 
-中文数学练习试卷生成脚本。每个脚本生成一类题目，输出可打印的 A4 PDF；答案独占最后一页，与题目编号对应。
+中文数学练习试卷生成脚本。每个脚本生成一类题目，支持通过 `--copies` 一次生成多份并写入同一个可打印的 A4 PDF。所有题目页在前，各份答案独占一页、按份号顺序集中在文件末尾；多份输出时页脚标明份号，各份题号从 1 开始。
 
 ## 安装
 
@@ -28,11 +28,18 @@ python multiplication_grade4.py
 | --- | --- | --- | --- |
 | `--output` | 输出 PDF 路径，必须以 `.pdf` 结尾；自动创建父目录，同路径文件会被覆盖 | 否 | `output/multiplication_grade4.pdf` |
 | `--seed` | 整数随机种子，相同种子生成相同题目 | 否 | 不固定，每次随机 |
+| `--copies` | 一次生成的份数，仅接受正整数；每份重新随机出题，同一份内题目不重复，份与份之间允许重复；相同种子和份数复现整批题目 | 否 | `1` |
 
 指定输出位置和随机种子：
 
 ```bash
 python multiplication_grade4.py --output output/example.pdf --seed 42
+```
+
+一次生成 3 份题目及对应答案，写入同一个 PDF（前 3 页为题目，后 3 页为对应答案）：
+
+```bash
+python multiplication_grade4.py --copies 3 --output output/batch.pdf --seed 42
 ```
 
 中文字体随 PDF 内嵌，无需另外安装字体。

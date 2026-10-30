@@ -3,6 +3,8 @@
 from pathlib import Path
 import random
 import re
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -35,7 +37,7 @@ class MultiplicationTests(unittest.TestCase):
         oral, written = generate_problems(random.Random(42))
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "试卷" / "练习.pdf"
-            write_pdf(output, oral, written)
+            write_pdf(output, [(oral, written)])
             with pymupdf.open(output) as document:
                 self.assertEqual(len(document), 2)
                 for page in document:
@@ -61,6 +63,56 @@ class MultiplicationTests(unittest.TestCase):
                 self.assertEqual(printed_answers, expected)
                 printed_questions = re.findall(r"(\d+)\.\s+(\d+)\s*×\s*(\d+)\s*=", questions)
                 self.assertEqual(printed_questions, [entry[:3] for entry in expected])
+
+    def test_multiple_copies_from_cli(self):
+        script = Path(__file__).resolve().parents[1] / "multiplication_grade4.py"
+        with tempfile.TemporaryDirectory() as directory:
+            texts = []
+            for run in range(2):
+                output = Path(directory) / f"batch{run}.pdf"
+                subprocess.run([sys.executable, str(script), "--copies", "3",
+                                "--seed", "42", "--output", str(output)],
+                               check=True, capture_output=True)
+                with pymupdf.open(output) as document:
+                    self.assertEqual(len(document), 6)
+                    batch = [page.get_text() for page in document]
+                    texts.append(batch)
+                    rng = random.Random(42)
+                    for index in range(3):
+                        oral, written = generate_problems(rng)
+                        questions, answers = batch[index], batch[index + 3]
+                        self.assertNotIn("参考答案", questions)
+                        self.assertIn("参考答案", answers)
+                        self.assertTrue(document[index].get_text(sort=True).startswith("一、口算"))
+                        for page_index in (index, index + 3):
+                            page = document[page_index]
+                            self.assertIn(f"第 {index + 1} 份", batch[page_index])
+                            self.assertIn(f"第 {page_index + 1} 页", batch[page_index])
+                            self.assertAlmostEqual(page.rect.width * 25.4 / 72, 210, places=2)
+                            self.assertAlmostEqual(page.rect.height * 25.4 / 72, 297, places=2)
+                            for word in page.get_text("words"):
+                                self.assertTrue(page.rect.contains(pymupdf.Rect(word[:4])))
+                        expected = [(str(i), str(a), str(b), str(a * b))
+                                    for i, (a, b) in enumerate(oral + written, 1)]
+                        self.assertEqual(re.findall(r"(\d+)\.\s+(\d+)\s*×\s*(\d+)\s*=", questions),
+                                         [entry[:3] for entry in expected])
+                        self.assertEqual(re.findall(r"(\d+)\.\s+(\d+)\s*×\s*(\d+)\s*=\s*(\d+)", answers),
+                                         expected)
+                    self.assertEqual(len(set(batch[:3])), 3)
+            self.assertEqual(texts[0], texts[1])
+
+    def test_invalid_copies_rejected(self):
+        script = Path(__file__).resolve().parents[1] / "multiplication_grade4.py"
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "invalid.pdf"
+            for value in ("0", "-1", "1.5", "abc"):
+                with self.subTest(value=value):
+                    result = subprocess.run(
+                        [sys.executable, str(script), "--copies", value,
+                         "--output", str(output)], capture_output=True)
+                    self.assertEqual(result.returncode, 2)
+                    self.assertIn(b"--copies", result.stderr)
+                    self.assertFalse(output.exists())
 
 
 if __name__ == "__main__":
