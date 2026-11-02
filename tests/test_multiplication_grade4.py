@@ -21,11 +21,14 @@ class MultiplicationTests(unittest.TestCase):
                 self.assertEqual(len(set(oral + written)), 20)
                 for group in (oral, written):
                     self.assertEqual(len(group), 10)
-                    self.assertTrue(all(10 <= b <= 99 for _, b in group))
-                self.assertTrue(all(100 <= a <= 999 for a, _ in oral))
-                self.assertEqual(sum(100 <= a <= 999 for a, _ in written), 5)
-                self.assertEqual(sum(1000 <= a <= 9999 for a, _ in written), 5)
-                self.assertTrue(all(a % 10 == b % 10 == 0 for a, b in oral))
+                for a, b in oral:
+                    self.assertTrue(10 <= a <= 9999)
+                    self.assertTrue(1 <= b <= 999)
+                    self.assertEqual(len(str(a).replace("0", "")), 2)
+                    self.assertEqual(len(str(b).replace("0", "")), 1)
+                self.assertTrue(all(10 <= b <= 99 for _, b in written))
+                self.assertEqual(sum(100 <= a <= 999 for a, _ in written), 8)
+                self.assertEqual(sum(10 <= a <= 99 for a, _ in written), 2)
 
     def test_seed_reproduces_questions(self):
         self.assertEqual(generate_problems(random.Random(42)),
