@@ -15,20 +15,34 @@ from multiplication_grade4 import generate_problems, write_pdf
 
 class MultiplicationTests(unittest.TestCase):
     def test_problem_constraints_across_seeds(self):
+        oral_orders = set()
+        written_orders = set()
+        oral_factors = set()
         for seed in range(200):
             with self.subTest(seed=seed):
                 oral, written = generate_problems(random.Random(seed))
-                self.assertEqual(len(set(oral + written)), 20)
+                self.assertEqual(len({tuple(sorted(problem)) for problem in oral + written}), 20)
+                self.assertTrue(all(a != 1 and b != 1 for a, b in oral + written))
                 for group in (oral, written):
                     self.assertEqual(len(group), 10)
                 for a, b in oral:
+                    oral_orders.add(len(str(a).replace("0", "")))
+                    oral_factors.update((a, b))
+                    if len(str(a).replace("0", "")) == 1:
+                        a, b = b, a
                     self.assertTrue(10 <= a <= 9999)
-                    self.assertTrue(1 <= b <= 999)
+                    self.assertTrue(2 <= b <= 999)
                     self.assertEqual(len(str(a).replace("0", "")), 2)
                     self.assertEqual(len(str(b).replace("0", "")), 1)
-                self.assertTrue(all(10 <= b <= 99 for _, b in written))
-                self.assertEqual(sum(100 <= a <= 999 for a, _ in written), 8)
-                self.assertEqual(sum(10 <= a <= 99 for a, _ in written), 2)
+                written_orders.update(len(str(a)) for a, _ in written)
+                normalized = [sorted(problem) for problem in written]
+                self.assertTrue(all(10 <= a <= 99 and 10 <= b <= 999
+                                    for a, b in normalized))
+                self.assertEqual(sum(100 <= b <= 999 for _, b in normalized), 8)
+                self.assertEqual(sum(10 <= b <= 99 for _, b in normalized), 2)
+        self.assertEqual(oral_orders, {1, 2})
+        self.assertEqual(written_orders, {2, 3})
+        self.assertTrue({10, 100, 101}.issubset(oral_factors))
 
     def test_seed_reproduces_questions(self):
         self.assertEqual(generate_problems(random.Random(42)),

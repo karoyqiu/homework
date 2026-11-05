@@ -14,7 +14,7 @@ FONT = pymupdf.Font("cjk")
 
 
 def generate_problems(rng: random.Random) -> tuple[list[Problem], list[Problem]]:
-    """口算两位非零数字乘一位非零数字；竖式八道三位数、两道两位数题。全卷不重复。"""
+    """口算两位非零数字乘一位非零数字；竖式八道三位数、两道两位数题。因数不为 1，随机交换，全卷不重复。"""
     used: set[Problem] = set()
     groups: list[list[Problem]] = []
     for oral in (True, False):
@@ -30,9 +30,12 @@ def generate_problems(rng: random.Random) -> tuple[list[Problem], list[Problem]]
                 else:
                     lower, upper = 10 ** (digits - 1), 10**digits - 1
                     problem = (rng.randint(lower, upper), rng.randint(10, 99))
-                if problem in used:
+                key = tuple(sorted(problem))
+                if 1 in problem or key in used:
                     continue
-                used.add(problem)
+                used.add(key)
+                if rng.random() < 0.5:
+                    problem = problem[::-1]
                 problems.append(problem)
                 selected += 1
         rng.shuffle(problems)
